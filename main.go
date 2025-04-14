@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -65,12 +66,19 @@ func main() {
 	}))
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		f, err := staticFiles.Open("static/index.html")
+		const filename = "static/index.html"
+		f, err := staticFiles.Open(filename)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer f.Close()
+		defer func() {
+			err := f.Close()
+			if err != nil {
+				log.Printf("error closing %q: %v", filename, err)
+			}
+		}()
+
 		if _, err := io.Copy(w, f); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -89,8 +97,9 @@ func main() {
 
 	router.Mount("/v1", v1Router)
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	log.Printf("Serving on port: %s\n", port)
