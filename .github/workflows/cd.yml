@@ -50,4 +50,4 @@ jobs:
           --set-secrets=DATABASE_URL=notely_db_password:1 \
           --region=europe-west3 \
           --project=notely-456921 \
-          && gcloud run services update-traffic notely --to-latest
+          --service-account cloud-run-deployer@notely-456921.iam.gserviceaccount.com \
